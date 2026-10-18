@@ -27,26 +27,32 @@ jobs:
         fi
         unzip "$ZIP_FILE" -d project_src
 
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v3
+
     - name: Build with Gradle
       run: |
-        # پیدا کردن فایل gradlew در هر عمقی از پوشه پروژه
-        GRADLEW_PATH=$(find project_src -name "gradlew" | head -n 1)
-        
-        if [ -z "$GRADLEW_PATH" ]; then
-          echo "خطا: فایل gradlew پیدا نشد. لطفا مطمئن شوید کل پوشه پروژه را زیپ کرده‌اید."
+        # پیدا کردن پوشه اصلی پروژه (جایی که settings.gradle قرار دارد)
+        SETTINGS_FILE=$(find project_src -name "settings.gradle" | head -n 1)
+        if [ -z "$SETTINGS_FILE" ]; then
+          echo "خطا: فایل settings.gradle پیدا نشد. مطمئن شوید کل پوشه پروژه را زیپ کرده‌اید."
           exit 1
         fi
         
-        # رفتن به پوشه‌ای که gradlew در آن قرار دارد
-        PROJECT_DIR=$(dirname "$GRADLEW_PATH")
+        PROJECT_DIR=$(dirname "$SETTINGS_FILE")
         cd "$PROJECT_DIR"
         
-        chmod +x gradlew
-        ./gradlew assembleDebug
+        if [ -f "gradlew" ]; then
+          echo "استفاده از gradlew پروژه..."
+          chmod +x gradlew
+          ./gradlew assembleDebug
+        else
+          echo "فایل gradlew یافت نشد. استفاده از Gradle سیستم..."
+          gradle assembleDebug
+        fi
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: SignalTracker-APK
-        # پیدا کردن فایل APK در هر عمقی از پوشه پروژه
         path: project_src/**/build/outputs/apk/debug/*.apk
