@@ -26,16 +26,20 @@ jobs:
           exit 1
         fi
         unzip "$ZIP_FILE" -d project_src
+        
+        echo "--- لیست فایل‌های استخراج شده ---"
+        ls -R project_src
 
     - name: Setup Gradle
       uses: gradle/gradle-build-action@v3
 
     - name: Build with Gradle
       run: |
-        # پیدا کردن پوشه اصلی پروژه (جایی که settings.gradle قرار دارد)
-        SETTINGS_FILE=$(find project_src -name "settings.gradle" | head -n 1)
+        # پیدا کردن فایل تنظیمات پروژه (چه با پسوند kts و چه بدون آن)
+        SETTINGS_FILE=$(find project_src -name "settings.gradle" -o -name "settings.gradle.kts" | head -n 1)
+        
         if [ -z "$SETTINGS_FILE" ]; then
-          echo "خطا: فایل settings.gradle پیدا نشد. مطمئن شوید کل پوشه پروژه را زیپ کرده‌اید."
+          echo "خطا: فایل settings.gradle پیدا نشد. ساختار زیپ شما اشتباه است."
           exit 1
         fi
         
@@ -43,11 +47,9 @@ jobs:
         cd "$PROJECT_DIR"
         
         if [ -f "gradlew" ]; then
-          echo "استفاده از gradlew پروژه..."
           chmod +x gradlew
           ./gradlew assembleDebug
         else
-          echo "فایل gradlew یافت نشد. استفاده از Gradle سیستم..."
           gradle assembleDebug
         fi
 
