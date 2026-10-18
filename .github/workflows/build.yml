@@ -20,7 +20,15 @@ jobs:
 
     - name: Unzip project
       run: |
-        unzip final_project.zip -d project_src
+        # پیدا کردن هر فایل زیپی که در صفحه اصلی است (مثل sp2ll.zip)
+        ZIP_FILE=$(find . -maxdepth 1 -name "*.zip" | head -n 1)
+        if [ -z "$ZIP_FILE" ]; then
+          echo "خطا: هیچ فایل زیپی در صفحه اصلی مخزن پیدا نشد!"
+          exit 1
+        fi
+        echo "در حال باز کردن فایل: $ZIP_FILE"
+        unzip "$ZIP_FILE" -d project_src
+        
         cd project_src
         # اگر فایل‌ها در یک پوشه اضافه بودند، آن‌ها را به روت منتقل میکنیم
         if [ $(ls -1 | wc -l) -eq 1 ] && [ -d $(ls -1) ]; then
