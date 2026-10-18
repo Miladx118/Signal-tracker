@@ -26,16 +26,21 @@ jobs:
           exit 1
         fi
         unzip "$ZIP_FILE" -d project_src
-        
-        cd project_src
-        if [ $(ls -1 | wc -l) -eq 1 ] && [ -d $(ls -1) ]; then
-          mv $(ls -1)/* .
-          mv $(ls -1)/.* . 2>/dev/null || true
-        fi
 
     - name: Build with Gradle
       run: |
-        cd project_src
+        # پیدا کردن فایل gradlew در هر عمقی از پوشه پروژه
+        GRADLEW_PATH=$(find project_src -name "gradlew" | head -n 1)
+        
+        if [ -z "$GRADLEW_PATH" ]; then
+          echo "خطا: فایل gradlew پیدا نشد. لطفا مطمئن شوید کل پوشه پروژه را زیپ کرده‌اید."
+          exit 1
+        fi
+        
+        # رفتن به پوشه‌ای که gradlew در آن قرار دارد
+        PROJECT_DIR=$(dirname "$GRADLEW_PATH")
+        cd "$PROJECT_DIR"
+        
         chmod +x gradlew
         ./gradlew assembleDebug
 
@@ -43,4 +48,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: SignalTracker-APK
-        path: project_src/app/build/outputs/apk/debug/*.apk
+        # پیدا کردن فایل APK در هر عمقی از پوشه پروژه
+        path: project_src/**/build/outputs/apk/debug/*.apk
